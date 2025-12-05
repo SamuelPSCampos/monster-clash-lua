@@ -1,6 +1,22 @@
 local bestiary = {}
 
+local utils = require("modules.utils")
+
 bestiary.baseAttribute = 100
+
+bestiary.statsMeta = {
+    { stat = "damage",  label = "Damage" },
+    { stat = "health",  label = "Health" },
+    { stat = "defense", label = "Defense" },
+    { stat = "speed",   label = "Speed" },
+}
+
+bestiary.order = {
+    "Monster 1",
+    "Monster 2",
+    "Monster 3",
+    "Monster 4",
+}
 
 bestiary.monsters = {
     ["Monster 1"] = {
@@ -64,5 +80,9 @@ bestiary.monsters = {
         },
     }
 }
+
+for _, monster in pairs(bestiary.monsters) do
+    monster.representation = utils.alignLeft(monster.representation)
+end
 
 return bestiary

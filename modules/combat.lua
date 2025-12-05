@@ -1,42 +1,46 @@
-local combat = {}
-
 local utils = require("modules.utils")
 local bestiary = require("modules.bestiary")
-local monsterRenderer = require("modules.monsterRenderer")
+local renderer = require("modules.renderer")
 local player = require("modules.player")
 
+local combat = {}
+
 combat.start = function()
-    for _, monsterName in ipairs(monsterRenderer.order) do
+    for _, monsterName in ipairs(bestiary.order) do
         local originalMonster = bestiary.monsters[monsterName]
 
         if not originalMonster then
-            error("Monster '" .. monsterName .. "' not found in bestiary.lua. Possible fix: update renderer.order in monsterRenderer.lua.")
+            error("Monster '" ..
+            monsterName .. "' not found in bestiary.lua. Possible fix: update bestiary.order.")
         end
 
         local monster = utils.deepCopy(originalMonster)
-        local sheet = monsterRenderer.monsterSheet(monsterName, monster, bestiary.baseAttribute)
+        local sheet = renderer.monsterSheet({
+            name = monsterName,
+            info = monster,
+        })
         local monsterStats = monster.stats
         local playerStats = utils.deepCopy(player.stats)
-        local initialLines, initialAddLine = utils.newBuffer()
+        local initialLines = utils.newBuffer()
 
         print(sheet)
 
-        initialAddLine({
-            utils.separator2,
+        initialLines:extend({
+            utils.separators[2],
             "A wild creature appears!",
             "You've entered into combat with a creature."
-        }, true)
+        })
 
         local initialLineBlock = table.concat(initialLines, "\n")
         print(utils.addBorder(initialLineBlock))
 
         while true do
-            local combatLines, combatAddLine = utils.newBuffer()
+            local combatLines = utils.newBuffer()
 
-            combatAddLine({
-                utils.separator2,
+            combatLines:extend({
+                utils.separators[2],
                 "What is your action?",
-            }, true)
+            })
 
             local combatLineBlock = table.concat(combatLines, "\n")
             print(utils.addBorder(combatLineBlock))
@@ -50,12 +54,12 @@ combat.start = function()
                 if player.actions[combatInput] then
                     player.actions[combatInput].action(monsterStats, playerStats)
                 else
-                    local lines, addLine = utils.newBuffer()
+                    local lines = utils.newBuffer()
 
-                    addLine({
-                        utils.separator2,
+                    lines:extend({
+                        utils.separators[2],
                         "Invalid number option. Please try again.",
-                    }, true)
+                    })
 
                     local lineBlock = table.concat(lines, "\n")
                     print(utils.addBorder(lineBlock))
@@ -66,13 +70,13 @@ combat.start = function()
             validCombatInput()
 
             if monsterStats.health <= 0 then
-                local lines, addLine = utils.newBuffer()
+                local lines = utils.newBuffer()
 
-                addLine({
-                    utils.separator1,
+                lines:extend({
+                    utils.separators[1],
                     "You have defeated the creature!",
                     "Enter any key to continue.",
-                }, true)
+                })
 
                 local lineBlock = table.concat(lines, "\n")
                 print(utils.addBorder(lineBlock))
@@ -80,7 +84,6 @@ combat.start = function()
                 break
             end
         end
-        ::continue::
     end
 end
 

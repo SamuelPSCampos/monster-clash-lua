@@ -1,88 +1,89 @@
+local utils = require("modules.utils")
+local combat = require("modules.combat")
+local asciiArts = require("modules.asciiArts")
+
 local menu = {}
 
-local utils = require("modules.utils")
-local game = require("modules.combat")
+------------------------------------------------------------
+-- menu.start
+------------------------------------------------------------
 
-local title = utils.alignLeft([[
-                        _                ___ _           _
-  /\/\   ___  _ __  ___| |_ ___ _ __    / __\ | __ _ ___| |__
- /    \ / _ \| '_ \/ __| __/ _ \ '__|  / /  | |/ _` / __| '_ \
-/ /\/\ \ (_) | | | \__ \ ||  __/ |    / /___| | (_| \__ \ | | |
-\/    \/\___/|_| |_|___/\__\___|_|    \____/|_|\__,_|___/_| |_|]])
-local titleIdentation = "         "
+--- Starts the game menu.
+--- Displays the title screen and then the list of options.
+--- @return nil
 function menu.start()
-    local lines, addLine = utils.newBuffer()
-
-    addLine({
-        utils.separator1,
-        utils.indentLines(title, titleIdentation),
-        utils.separator1,
+    utils.showScreen({
+        utils.separators[1],
+        utils.indentLines(asciiArts.gameTitle, 9),
+        utils.separators[1],
         "Welcome to Monster Clash!",
-        utils.separator2,
+        utils.separators[2],
         "In this game, you will face various monsters.",
         "Choose your actions wisely to defeat them all!",
-        utils.separator2,
+        utils.separators[2],
         "Enter the option number.",
-    }, true)
-
-    local lineBlock = table.concat(lines, "\n")
-    print(utils.addBorder(lineBlock))
+    })
 
     menu.options()
 end
 
+------------------------------------------------------------
+-- menu.actions
+------------------------------------------------------------
+
+--- @class MenuAction
+--- @field label string Display name for the option.
+--- @field action fun() Function called when the option is selected.
+
+--- List of menu actions available to the player.
+--- @type MenuAction[]
 menu.actions = {
+
+    --------------------------------------------------------
+    -- Play
+    --------------------------------------------------------
     {
         label = "Play",
         action = function()
-            game.start()
+            combat.start()
         end,
     },
 
+    --------------------------------------------------------
+    -- Credits
+    --------------------------------------------------------
     {
         label = "Credits",
         action = function()
-            local lines, addLine = utils.newBuffer()
-            local heart = utils.alignLeft([[
-                ** **
-               *******
-                *****
-                 ***
-                  *]])
-
-            addLine({
-                utils.separator1,
+            utils.showScreen({
+                utils.separators[1],
                 "Monster Clash",
                 "Developed by Samuel Campos",
                 "MIT License",
                 "Thank you for playing!",
-                utils.indentLines(heart, "       "),
-                utils.separator2,
-                "Enter any key to return to the menu.",
-            }, true)
+                utils.indentLines(asciiArts.heartCredits, 7),
+                utils.separators[2],
+                "Press 'Enter' to return to the menu.",
+            })
 
-            local lineBlock = table.concat(lines, "\n")
-            print(utils.addBorder(lineBlock))
+            utils.customIoRead()
+            print(utils.addBorder(utils.separators[1]))
 
-            local input = utils.customIoRead()
-            print(utils.addBorder(utils.separator1))
             menu.options()
         end,
     },
 
+    --------------------------------------------------------
+    -- Quit
+    --------------------------------------------------------
     {
         label = "Quit",
         action = function()
-            local lines, addLine = utils.newBuffer()
-
-            addLine({
-                utils.separator1,
+            utils.showScreen({
+                utils.separators[1],
                 "Are you sure you want to quit? All data will be lost.",
                 "Enter 'y' to quit, or any other key to cancel.",
-            }, true)
-
-            local lineBlock = table.concat(lines, "\n")
-            print(utils.addBorder(lineBlock))
+            })
 
             local input = utils.customIoRead()
             local isY = input and input:lower() == "y"
@@ -90,13 +91,21 @@ menu.actions = {
             if isY then
                 os.exit()
             else
-                print(utils.addBorder(utils.separator1))
+                print(utils.addBorder(utils.separators[1]))
                 menu.options()
             end
         end,
     },
 }
 
+------------------------------------------------------------
+-- menu.options
+------------------------------------------------------------
+
+--- Displays the list of actions and waits for user input.
+--- If the user selects a valid option, that action is executed.
+--- Otherwise an error screen is shown and the menu repeats.
+--- @return nil
 function menu.options()
     local menuActions = utils.formatActions(menu.actions)
     print(utils.addBorder(menuActions))
@@ -105,17 +114,15 @@ function menu.options()
 
     if input and menu.actions[input] then
         menu.actions[input].action()
-    else
-        local lines, addLine = utils.newBuffer()
-        addLine({
-            utils.separator1,
-            "Invalid option number. Please try again.",
-        }, true)
-
-        local lineBlock = table.concat(lines, "\n")
-        print(utils.addBorder(lineBlock))
-        menu.options()
+        return
     end
+
+    utils.showScreen({
+        utils.separators[1],
+        "Invalid option number. Please try again.",
+    })
+
+    menu.options()
 end
 
 return menu
