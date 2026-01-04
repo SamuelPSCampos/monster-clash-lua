@@ -1,15 +1,15 @@
-local utils = {}
+local Utils = {}
 
 ------------------------------------------------------------
 -- separators
 ------------------------------------------------------------
 
-local separatorLength <const> = 100
+local SEPARATOR_LENGTH <const> = 100
 
 --- Predefined line separators (long horizontal rule variants).
-utils.separators = {
-    [1] = string.rep("=", separatorLength),
-    [2] = string.rep("-", separatorLength),
+Utils.separators = {
+    [1] = string.rep("=", SEPARATOR_LENGTH),
+    [2] = string.rep("-", SEPARATOR_LENGTH),
 }
 
 ------------------------------------------------------------
@@ -23,14 +23,14 @@ utils.separators = {
 --- @param text string
 --- @param border string?
 --- @return string
-function utils.addBorder(text, border)
+function Utils.addBorder(text, border)
     border = border or "|"
     local result = {}
 
     for line in text:gmatch("([^\n]*)\n?") do
         local isSeparator = false
 
-        for _, sep in ipairs(utils.separators) do
+        for _, sep in ipairs(Utils.separators) do
             if line == sep then
                 isSeparator = true
                 break
@@ -47,12 +47,16 @@ function utils.addBorder(text, border)
     return table.concat(result, "\n")
 end
 
+------------------------------------------------------------
+-- newBuffer
+------------------------------------------------------------
+
 --- Creates a buffer object.
 --- add(value) appends one value.
 --- extend(list) recursively appends items from array-like tables,
 --- avoiding cycles.
 --- @return table Buffer object.
-function utils.newBuffer()
+function Utils.newBuffer()
     local buffer = {}
     local visited = setmetatable({}, { __mode = "k" })
 
@@ -84,7 +88,7 @@ end
 --- @param obj table
 --- @param seen table?
 --- @return any
-function utils.deepCopy(obj, seen)
+function Utils.deepCopy(obj, seen)
     if type(obj) ~= "table" then return obj end
     if seen and seen[obj] then return seen[obj] end
 
@@ -93,7 +97,7 @@ function utils.deepCopy(obj, seen)
     s[obj] = res
 
     for k, v in pairs(obj) do
-        res[utils.deepCopy(k, s)] = utils.deepCopy(v, s)
+        res[Utils.deepCopy(k, s)] = Utils.deepCopy(v, s)
     end
 
     return setmetatable(res, getmetatable(obj))
@@ -111,7 +115,7 @@ end
 --- @param lines string
 --- @param indentation string|number|nil
 --- @return string
-function utils.indentLines(lines, indentation)
+function Utils.indentLines(lines, indentation)
     if type(indentation) == "number" then
         indentation = string.rep(" ", indentation)
     end
@@ -134,14 +138,14 @@ end
 --- Reads input with optional prompt formatting.
 --- @param opts? { symbol?: string, readType?: string, border?: string }
 --- @return string
-function utils.customIoRead(opts)
+function Utils.customIoRead(opts)
     opts = (type(opts) == "table" and opts) or {}
 
     local symbol = (opts.symbol or ">") .. " "
     local readType = opts.readType or "*l"
     local border = opts.border
 
-    io.write(utils.addBorder(symbol, border))
+    io.write(Utils.addBorder(symbol, border))
     return io.read(readType)
 end
 
@@ -152,7 +156,7 @@ end
 --- Removes the smallest common indentation from all lines in a multi-line string.
 --- @param text string
 --- @return string
-function utils.alignLeft(text)
+function Utils.alignLeft(text)
     local lines = {}
     local firstChars = {}
     local count = 0
@@ -194,18 +198,27 @@ end
 -- formatActions
 ------------------------------------------------------------
 
---- Formats a numbered list of menu actions.
---- Each entry may contain a "label" field; fallback is "label".
---- @param actions table<number, table> alguma coisa
---- @param symbol string|nil Character placed after the index (default ")").
+--- Formats a numbered list of menu actions using an explicit order.
+--- @param actions table<string, table> Table of actions indexed by id
+--- @param order table<number, string> Ordered list of action ids
+--- @param symbol string|nil Character placed after the index (default ")")
 --- @return string
-function utils.formatActions(actions, symbol)
+function Utils.formatActions(actions, order, symbol)
     symbol = symbol or ")"
     local lines = {}
 
-    for i, action in ipairs(actions) do
-        if type(action) == "table" then
-            lines[#lines + 1] = string.format("%d%s %s", i, symbol, action.label or "label")
+    for index, actionId in ipairs(order) do
+        local action = actions[actionId]
+
+        if action then
+            lines[#lines + 1] = string.format(
+                "%d%s %s",
+                index,
+                symbol,
+                action.label or actionId
+            )
+        else
+            warn("formatActions: invalid action id in order:", actionId)
         end
     end
 
@@ -220,11 +233,11 @@ end
 --- and printing it with an optional custom border.
 --- @param list table List of strings or nested tables to display.
 --- @param border string|nil Optional border symbol passed to addBorder.
-function utils.showScreen(list, border)
-    local buffer = utils.newBuffer()
+function Utils.showScreen(list, border)
+    local buffer = Utils.newBuffer()
     buffer:extend(list)
     local block = table.concat(buffer, "\n")
-    print(utils.addBorder(block, border))
+    print(Utils.addBorder(block, border))
 end
 
 ------------------------------------------------------------
@@ -238,7 +251,7 @@ end
 
 --- Validates a value against an expected Lua type.
 --- @param opts ExpectOptions Configuration table with validation settings.
-function utils.expect(opts)
+function Utils.expect(opts)
     if type(opts) ~= "table" then
         error("expect.opts: table with fields { name, value, expected } required", 2)
     end
@@ -263,4 +276,51 @@ function utils.expect(opts)
     end
 end
 
-return utils
+------------------------------------------------------------
+-- initRandom
+------------------------------------------------------------
+
+--- Initializes the Lua random number generator (RNG) using a seed
+--- enhanced with entropy derived from memory allocation.
+--- This minimizes the chances of identical RNG sequences across
+--- multiple executions started within the same second.
+---
+--- This function should be called once at program start,
+--- and modules requiring randomness can safely assume
+--- the RNG has already been initialized.
+---
+--- @return nil
+function Utils.initRandom()
+    local entropy = tonumber(tostring({}):sub(8)) or 0
+    local extra = math.floor(os.clock() * 1e6)
+    math.randomseed(os.time() + entropy + extra)
+end
+
+------------------------------------------------------------
+-- clamp
+------------------------------------------------------------
+
+--- Clamps a numeric value between a minimum and maximum.
+---
+--- @param x number Value to clamp
+--- @param min number Minimum allowed value
+--- @param max number Maximum allowed value
+--- @return number clampedValue
+function Utils.clamp(x, min, max)
+    return math.max(min, math.min(max, x))
+end
+
+------------------------------------------------------------
+-- smoothChance
+------------------------------------------------------------
+
+--- Applies a smooth S-curve to a probability value, reducing
+--- extreme results while preserving mid-range probabilities.
+---
+--- @param x number Probability value in the range [0, 1]
+--- @return number smoothedValue
+function Utils.smoothChance(x)
+    return x * x * (3 - 2 * x)
+end
+
+return Utils

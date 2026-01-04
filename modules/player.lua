@@ -1,62 +1,33 @@
-local utils = require("modules.utils")
-local renderer = require("modules.renderer")
-local bestiary = require("modules.bestiary")
+local Bestiary = require("modules.bestiary")
+local Utils = require("modules.utils")
 
-local player = {}
+local Player = {}
 
 ------------------------------------------------------------
--- Base Player Stats
+-- Player
 ------------------------------------------------------------
 
-player.stats = {
-    damage = bestiary.baseAttribute * 0.1,
-    health = bestiary.baseAttribute * 1.0,
-    defense = bestiary.baseAttribute * 0.2,
-    speed = bestiary.baseAttribute * 0.9,
+Player.name = "You"
+
+Player.description = "You..."
+
+Player.representation = Utils.alignLeft([[
+  ___
+ |___|
+ | | |
+ |_|_|
+  | |]])
+
+Player.stats = {
+    damage = Bestiary.baseAttribute * 0.35,
+    maxHealth = Bestiary.baseAttribute * 1.2,
+    health = Bestiary.baseAttribute * 1.2,
+    defense = Bestiary.baseAttribute * 0.3,
+    speed = Bestiary.baseAttribute * 0.8,
+    critical = Bestiary.baseAttribute * 0.25,
+    defending = false,
+    hitAccumulator = 0,
+    critAccumulator = 0,
 }
 
-------------------------------------------------------------
--- Player Actions
-------------------------------------------------------------
-
----@class PlayerAction
----@field label string
----@field action fun(monsterStats: table, playerStats: table)
-
----@type PlayerAction[]
-player.actions = {
-
-    --------------------------------------------------------
-    -- Attack
-    --------------------------------------------------------
-    {
-        label = "Attack",
-        action = function(monsterStats, playerStats)
-            local statLabel = "Health:"
-            local chance = math.random(1, bestiary.baseAttribute)
-
-            if chance <= playerStats.speed then
-                monsterStats.health = monsterStats.health - playerStats.damage
-
-                utils.showScreen({
-                    "You attack the creature for " .. playerStats.damage .. " damage!",
-                    renderer.formatStatLine({ label = statLabel, attribute = monsterStats.health, }),
-                })
-            else
-                print(utils.addBorder("Your attack missed!"))
-            end
-        end,
-    },
-
-    --------------------------------------------------------
-    -- Defend
-    --------------------------------------------------------
-    {
-        label = "Defend",
-        action = function(monsterStats, playerStats)
-            -- TODO: defense logic
-        end,
-    },
-}
-
-return player
+return Player
