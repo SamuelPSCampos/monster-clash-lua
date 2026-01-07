@@ -10,31 +10,31 @@ local Combat = {}
 
 Combat.start = function()
     local function validCombatInput(monster, player)
-        Utils.showScreen({
-            Utils.formatActions(
-                CombatActions.actions,
-                CombatActions.actionsOrder
-            )
-        })
+        while true do
+            Utils.showScreen({
+                Utils.formatActions(
+                    CombatActions.actions,
+                    CombatActions.actionsOrder
+                )
+            })
 
-        local input = tonumber(Utils.customIoRead())
+            local input = tonumber(Utils.customIoRead())
 
-        if input then
-            local actionId = CombatActions.actionsOrder[input]
-            local action = actionId and CombatActions.actions[actionId]
+            if input then
+                local actionId = CombatActions.actionsOrder[input]
+                local action = actionId and CombatActions.actions[actionId]
 
-            if action then
-                action.action(player, monster)
-                return
+                if action then
+                    action.action(player, monster)
+                    return
+                end
             end
+
+            Utils.showScreen({
+                Utils.separators[2],
+                "Invalid number option. Please try again.",
+            })
         end
-
-        Utils.showScreen({
-            Utils.separators[2],
-            "Invalid number option. Please try again.",
-        })
-
-        validCombatInput(monster, player)
     end
 
     local player = Utils.deepCopy(Player)
@@ -51,7 +51,7 @@ Combat.start = function()
         local monster = Utils.deepCopy(originalMonster)
         local monstherSheet = Renderer.entitySheet({ info = monster })
         local monsterStats = monster.stats
-        local playerSheet =  Renderer.entitySheet({ info = player })
+        local playerSheet = Renderer.entitySheet({ info = player })
 
         print(playerSheet)
         print(monstherSheet)

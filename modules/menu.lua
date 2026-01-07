@@ -26,7 +26,7 @@ function Menu.start()
         "Enter the option number.",
     })
 
-    Menu.options()
+    Menu.loop()
 end
 
 ------------------------------------------------------------
@@ -61,7 +61,6 @@ Menu.actions = {
         label = "Play",
         action = function()
             Combat.start()
-            Menu.start() -- when the combat ends, the game returns to the menu
         end,
     },
 
@@ -83,9 +82,6 @@ Menu.actions = {
             })
 
             Utils.customIoRead()
-            print(Utils.addBorder(Utils.separators[1]))
-
-            Menu.options()
         end,
     },
 
@@ -102,48 +98,43 @@ Menu.actions = {
             })
 
             local input = Utils.customIoRead()
-            local isY = input and input:lower() == "y"
-
-            if isY then
+            if input and input:lower() == "y" then
                 os.exit()
-            else
-                print(Utils.addBorder(Utils.separators[1]))
-                Menu.options()
             end
         end,
     },
 }
 
 ------------------------------------------------------------
--- Menu.options
+-- Menu.loop
 ------------------------------------------------------------
 
---- Displays the list of actions and waits for user input.
---- If the user selects a valid option, that action is executed.
---- Otherwise an error screen is shown and the menu repeats.
+--- Runs the main menu loop.
+--- Continuously displays the menu options, waits for user input,
+--- and executes the selected action.
+--- This loop is intentionally infinite and only ends when the
+--- application exits (e.g. via the "Quit" action).
+--- Invalid inputs are handled gracefully without using recursion,
+--- preventing stack overflow.
 --- @return nil
-function Menu.options()
-    local menuText = Utils.formatActions(Menu.actions, Menu.actionsOrder)
-    print(Utils.addBorder(menuText))
+function Menu.loop()
+    while true do
+        local menuText = Utils.formatActions(Menu.actions, Menu.actionsOrder)
+        print(Utils.addBorder(menuText))
 
-    local input = tonumber(Utils.customIoRead())
-
-    if input then
-        local actionId = Menu.actionsOrder[input]
+        local input = tonumber(Utils.customIoRead())
+        local actionId = input and Menu.actionsOrder[input]
         local action = actionId and Menu.actions[actionId]
 
         if action then
             action.action()
-            return
+        else
+            Utils.showScreen({
+                Utils.separators[1],
+                "Invalid option number. Please try again.",
+            })
         end
     end
-
-    Utils.showScreen({
-        Utils.separators[1],
-        "Invalid option number. Please try again.",
-    })
-
-    Menu.options()
 end
 
 return Menu

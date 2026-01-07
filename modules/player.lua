@@ -19,7 +19,7 @@ Player.representation = Utils.alignLeft([[
   | |]])
 
 Player.stats = {
-    damage = Bestiary.baseAttribute * 0.35,
+    damage = Bestiary.baseAttribute * 0.28,
     maxHealth = Bestiary.baseAttribute * 1.2,
     health = Bestiary.baseAttribute * 1.2,
     defense = Bestiary.baseAttribute * 0.3,

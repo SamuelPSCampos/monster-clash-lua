@@ -77,6 +77,12 @@ local INTE_MIN <const> = 0.1
 --- Prevents monsters from acting with perfect decision-making.
 local INTE_MAX <const> = 0.9
 
+--- Rolls whether the monster will act intelligently this turn.
+--- Uses an accumulator system to smooth decision-making over time,
+--- preventing extreme streaks of dumb or smart behavior.
+--- @param monsterStats table Monster combat stats, including intelligence and intAccumulator.
+--- @return boolean actedSmart Whether the monster acted intelligently.
+--- @return number smartChance The normalized intelligence chance added to the accumulator.
 function CombatLogic.rollIntelligence(monsterStats)
     monsterStats.intAccumulator = monsterStats.intAccumulator
 
@@ -95,6 +101,14 @@ function CombatLogic.rollIntelligence(monsterStats)
     return actedSmart, smartChance
 end
 
+------------------------------------------------------------
+-- getBestAction
+------------------------------------------------------------
+
+--- Determines the best combat action based on the monster's current health.
+--- Chooses more defensive or restorative actions as health decreases.
+--- @param stats table Monster combat stats, must include health and maxHealth.
+--- @return string action The optimal action ("attack", "defend", or "heal").
 function CombatLogic.getBestAction(stats)
     local hpRatio = stats.health / stats.maxHealth
 
@@ -107,6 +121,15 @@ function CombatLogic.getBestAction(stats)
     end
 end
 
+------------------------------------------------------------
+-- chooseMonsterAction
+------------------------------------------------------------
+
+--- Chooses the monster's action for the turn.
+--- If the monster acts intelligently, it selects the best possible action.
+--- Otherwise, it performs a weighted random action.
+--- @param monsterStats table Monster combat stats, including intelligence data.
+--- @return string action The chosen action ("attack", "defend", or "heal").
 function CombatLogic.chooseMonsterAction(monsterStats)
     local actedSmart = CombatLogic.rollIntelligence(monsterStats)
 

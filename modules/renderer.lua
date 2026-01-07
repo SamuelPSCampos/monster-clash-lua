@@ -45,7 +45,7 @@ function Renderer.createBar(value, maxValue)
 
     return string.format(
         "%s %3d",
-        bar, value)
+        bar, math.floor(value))
 end
 
 ------------------------------------------------------------
